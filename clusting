@@ -1,0 +1,457 @@
+# Import necessary libraries for data manipulation, optimization,
+# clustering, and plotting
+import numpy as np
+import pandas as pd
+import scipy.optimize as opt
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+import matplotlib.pyplot as plt
+import itertools as iter
+
+cluster_count = 8
+
+
+def generate_data(num_samples: int, num_clusters: int):
+    """
+    Generate synthetic data using the make_blobs function from sklearn.datasets.
+
+    :param num_samples: int
+        Number of samples to generate.
+    :param num_clusters: int
+        Number of clusters or centers to generate.
+
+    :return: tuple
+        A tuple containing the generated data X and corresponding labels y.
+    """
+    X, y = make_blobs(n_samples=num_samples,
+                      centers=num_clusters, random_state=0)
+    return X, y
+
+
+# Generate synthetic data with 200 samples and a specified number of clusters
+X, y = generate_data(200, cluster_count)
+
+
+def apply_kmeans(data, num_clusters):
+    """
+    Apply K-means clustering to the given data.
+
+    :param data: array-like
+        Input data to be clustered.
+    :param num_clusters: int
+        Number of clusters to create.
+
+    :return: KMeans
+        Fitted K-means model.
+    """
+    model = KMeans(n_clusters=num_clusters, random_state=0).fit(data)
+    return model
+
+
+# Apply K-means clustering to the generated data with a specified number
+# of clusters
+kmeans_model = apply_kmeans(X, cluster_count)
+
+
+def visualize_clusters(data, kmeans_model, x_label, y_label, plot_title):
+    """
+    Visualize the clusters and cluster centers obtained from K-means clustering.
+
+    :param data: array-like
+        Input data to be visualized.
+    :param kmeans_model: KMeans
+        Fitted K-means model.
+    :param x_label: str
+        Label for the x-axis.
+    :param y_label: str
+        Label for the y-axis.
+    :param plot_title: str
+        Title of the plot.
+
+    :return: None
+    """
+    plt.figure(figsize=(10, 6))
+    plt.scatter(data[:, 0], data[:, 1], c=kmeans_model.labels_)
+
+    plt.scatter(
+        kmeans_model.cluster_centers_[
+            :, 0], kmeans_model.cluster_centers_[
+            :, 1], marker='D', color='black')
+
+    plt.xlabel(x_label, fontsize=18)
+    plt.ylabel(y_label, fontsize=18)
+    plt.title(plot_title, fontsize=20)
+    plt.legend(['Cluster', 'Cluster Center'])
+    plt.show()
+
+
+# Visualize the clusters and cluster centers obtained from K-means clustering
+visualize_clusters(X, kmeans_model, 'X-axis', 'Y-axis',
+                   'K-means Clustering Visualization')
+
+
+def load_worldbank_data(filepath: str):
+    """
+    Load and transform World Bank data from a CSV file.
+
+    :param filepath: str
+        Filepath of the CSV file containing the World Bank data.
+
+    :return: tuple
+        A tuple containing the original data DataFrame and the reshaped data DataFrame.
+    """
+    original_data = pd.read_csv(filepath)
+    countries = list(original_data['Country Name'])
+
+    # Transpose the data and set country names as column headers
+    reshaped_data = original_data.transpose()
+    reshaped_data.columns = countries
+
+    # Remove unnecessary rows and reset index
+    reshaped_data = reshaped_data.iloc[4:-1]
+    reshaped_data = reshaped_data.reset_index()
+
+    # Rename the 'index' column to 'Year'
+    reshaped_data = reshaped_data.rename(columns={"index": "Year"})
+
+    # Convert the 'Year' column to integer
+    reshaped_data['Year'] = reshaped_data['Year'].astype(int)
+
+    return original_data, reshaped_data
+
+
+# Load and transform World Bank data from the CSV file 'all_data2.csv'
+original_data, reshaped_data = load_worldbank_data('all_data2.csv')
+
+
+def compute_indicator_statistics(data):
+    """
+    Compute statistics for a specific indicator in the given data.
+
+    :param data: DataFrame
+        DataFrame containing the indicator data.
+
+    :return: None
+    """
+    # Compute the average value of the indicator
+    avg_indicator = data.mean()
+    print("Average Indicator Value:")
+    print(avg_indicator)
+    print("\n\n")
+
+    # Filter the data for a specific year
+    indicator_year_2013 = data[data['Year'] == 2013]
+    print("Indicator Value for 2013:")
+    print(indicator_year_2013)
+
+
+# Compute statistics for the 'Unemployment, total (% of total labor force)
+# (national estimate)' indicator
+compute_indicator_statistics(data2)
+
+
+def visualize_indicator_trends(data, selected_countries):
+    """
+    Visualize the trends of a specific indicator for selected countries over time.
+
+    :param data: DataFrame
+        DataFrame containing the indicator data.
+    :param selected_countries: list
+        List of country names to plot.
+
+    :return: None
+    """
+    fig = plt.figure(figsize=(10, 6))  # Set the figure size before plotting
+    ax = fig.add_subplot(111)
+
+    # Plot the indicator values for the selected countries over time
+    data.plot(x='Year', y=selected_countries, ax=ax)
+
+    ax.set_title("Unemployment Trends per Country", fontsize=20)
+    ax.set_xlabel("Year", fontsize=18)
+    ax.set_ylabel("(% of total labor force)", fontsize=18)
+
+    plt.show()
+
+
+# Visualize the trends of the 'Unemployment, total (% of total labor
+# force) (national estimate)' indicator
+visualize_indicator_trends(data2, ['United States', 'Brazil', 'Germany'])
+
+
+def read_worldbank_data(file_path):
+    """
+    Read and transform World Bank data from a CSV file.
+
+    :param file_path: str
+        File path of the CSV file containing the World Bank data.
+
+    :return: tuple
+        A tuple containing the original DataFrame and the transposed DataFrame.
+    """
+    original_df = pd.read_csv(file_path)
+    country = list(original_df['Country Name'])
+
+    # Transpose the DataFrame and set country names as column headers
+    transposed_df = original_df.transpose()
+    transposed_df.columns = country
+
+    # Remove unnecessary rows and reset index
+    transposed_df = transposed_df.iloc[4:-1]
+    transposed_df = transposed_df.reset_index()
+    transposed_df = transposed_df.rename(columns={"index": "Year"})
+    transposed_df['Year'] = transposed_df['Year'].astype(int)
+
+    return original_df, transposed_df
+
+
+# Read and transform World Bank data from the CSV file 'all_data1.csv'
+original_df, transposed_df = read_worldbank_data("all_data1.csv")
+
+# Get the list of country names
+country = list(original_df['Country Name'])
+
+
+def plot_indicator_trends(df, country):
+    """
+    Plot the trends of a specific indicator for a given country over time.
+
+    :param df: DataFrame
+        DataFrame containing the indicator data.
+    :param country: str
+        Name of the country for which the indicator trends should be plotted.
+
+    :return: None
+    """
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+
+    # Plot the indicator trends for the given country over time
+    df.plot("Year", country, ax=ax)
+
+    ax.set_title(f"{country}'s Unemployment Trends", fontsize=20)
+    ax.set_xlabel("Year", fontsize=18)
+    ax.set_ylabel("Unemployment Value", fontsize=18)
+    ax.legend(["% of total labor"])
+
+    plt.show()
+
+
+# Plot the trends of the 'Unemployment, total (% of total labor force)
+# (national estimate)' indicator
+plot_indicator_trends(transposed_df, country[0])
+
+
+def logistic_function(t, n0, g, t0):
+    """
+    Logistic function used for fitting data.
+
+    :param t: array-like
+        Independent variable (time).
+    :param n0: float
+        Initial value.
+    :param g: float
+        Growth rate.
+    :param t0: float
+        Inflection point.
+
+    :return: array-like
+        Values of the logistic function.
+    """
+    f = n0 / (1 + np.exp(-g * (t - t0)))
+    return f
+
+
+df = transposed_df
+parameters, covariance = opt.curve_fit(
+    logistic_function, df["Year"], df[country].squeeze(), p0=(
+        float(df[country].iloc[0]), 0.03, 2005.0),
+    maxfev=5000)
+
+standard_deviations = np.sqrt(np.diag(covariance))
+print("Parameters:", parameters)
+print("Standard Deviations:", standard_deviations)
+
+df["fit"] = logistic_function(df["Year"], *parameters)
+
+
+def display_logistic_fit(dataframe, nation):
+    """
+    Display the logistic fit for a specific indicator and country.
+
+    :param dataframe: DataFrame
+        DataFrame containing the indicator data and the fit.
+    :param nation: str
+        Name of the country.
+
+    :return: None
+    """
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+    dataframe.plot("Year", [nation, "fit"], ax=ax)
+    ax.set_title(
+        "Logistic Fit for {}'s Unemployment Indicator Growth".format(nation),
+        fontsize=20)
+    ax.set_xlabel("Year", fontsize=18)
+    ax.set_ylabel("Unemployment Value", fontsize=18)
+    ax.legend(["Unemployment", "Fit"])
+
+    plt.show()
+
+
+display_logistic_fit(df, country[0])
+
+upcoming_years = [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026,
+    2027,
+    2028,
+    2029,
+    2030,
+    2031,
+    2032]
+future_log_values = logistic_function(upcoming_years, *parameters)
+
+print("Future Logistic Values from 2021 to 2032:")
+print(future_log_values)
+
+years_range = np.arange(df['Year'][0], 2033)
+forecast_values = logistic_function(years_range, *parameters)
+
+
+def visualize_future_predictions(dataframe, nation, predictions, years):
+    """
+    Visualize the future predictions of an indicator for a specific country.
+
+    :param dataframe: DataFrame
+        DataFrame containing the indicator data.
+    :param nation: str
+        Name of the country.
+    :param predictions: array-like
+        Predicted values for future years.
+    :param years: array-like
+        Future years.
+
+    :return: None
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(dataframe["Year"], dataframe[nation], label="Indicator")
+    plt.plot(years, predictions, label="Forecast")
+
+    plt.title(
+        "Prediction of {}'s Unemployment Growth for Future Years".format(nation),
+        fontsize=20)
+    plt.xlabel("Year", fontsize=18)
+    plt.ylabel("Unemployment Value", fontsize=18)
+    plt.legend(["Unemployment total %", "Forecast"])
+
+    plt.show()
+
+
+visualize_future_predictions(df, country[0], forecast_values, years_range)
+
+df2 = pd.DataFrame({'Upcoming Year': upcoming_years,
+                   'Logistic': future_log_values})
+
+
+def calculate_error_ranges(x, func, params, sigma):
+    """
+    Calculate the lower and upper error ranges for a given function and parameters.
+
+    :param x: array-like
+        Independent variable values.
+    :param func: function
+        Function to calculate the values.
+    :param params: array-like
+        Function parameters.
+    :param sigma: array-like
+        Standard deviations of the parameters.
+
+    :return: tuple
+        Tuple containing the lower and upper error ranges.
+    """
+    import itertools as iter
+
+    lower = func(x, *params)
+    upper = lower
+
+    uplow = []
+    for p, s in zip(params, sigma):
+        pmin = p - s
+        pmax = p + s
+        uplow.append((pmin, pmax))
+
+    pmix = list(iter.product(*uplow))
+
+    for p in pmix:
+        y = func(x, *p)
+        lower = np.minimum(lower, y)
+        upper = np.maximum(upper, y)
+
+    return lower, upper
+
+
+limits_low, limits_up = calculate_error_ranges(
+    years_range, logistic_function, parameters, sigma)
+
+
+def visualize_prediction_intervals(
+        dataframe,
+        nation,
+        predictions,
+        years,
+        lower_bound,
+        upper_bound):
+    """
+    Visualize the prediction intervals for a given nation's EPC growth.
+
+    :param dataframe: DataFrame
+        The original data containing EPC values.
+    :param nation: str
+        The nation for which the prediction intervals are visualized.
+    :param predictions: array-like
+        The predicted EPC values.
+    :param years: array-like
+        The years corresponding to the predicted EPC values.
+    :param lower_bound: array-like
+        The lower bounds of the prediction intervals.
+    :param upper_bound: array-like
+        The upper bounds of the prediction intervals.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(
+        dataframe["Year"],
+        dataframe[nation],
+        label="Unemployment, total %")
+    plt.plot(years, predictions, label="Forecast")
+
+    plt.fill_between(
+        years,
+        lower_bound,
+        upper_bound,
+        color="yellow",
+        alpha=0.7)
+    plt.title(
+        "Prediction Intervals of {}'s Unemployment, total % Growth".format(nation),
+        fontsize=20)
+    plt.xlabel("Year", fontsize=18)
+    plt.ylabel("kWh per capita", fontsize=18)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+visualize_prediction_intervals(
+    df,
+    country[0],
+    forecast_values,
+    years_range,
+    limits_low,
+    limits_up)
+
+
+print(calculate_error_ranges(2030, logistic_function, parameters, sigma))
